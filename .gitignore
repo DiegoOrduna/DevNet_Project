@@ -1,0 +1,6 @@
+#ignoring access.py
+/access.py
+#ignoring .vscode
+/.vscode
+#ignoring __pycache__
+/__pycache__
