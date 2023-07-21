@@ -4,3 +4,5 @@
 /.vscode
 #ignoring __pycache__
 /__pycache__
+#ignoring node modules
+/node_modules/

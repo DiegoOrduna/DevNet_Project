@@ -5,6 +5,7 @@ from utils import (
     get_device_information,
     get_bugs,
     get_vulnerabilities,
+    get_memory,
 )
 
 if __name__ == "__main__":
@@ -18,6 +19,8 @@ if __name__ == "__main__":
     df = get_bugs(df)
     print("Getting vulns information...")
     df = get_vulnerabilities(df)
+    print("Getting memory information...")
+    df = get_memory(df)
     print(df)
     print("Saving data to csv file...")
     df.to_csv("interns_challenge_final.csv", index=False)
