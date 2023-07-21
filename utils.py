@@ -44,7 +44,6 @@ def get_device_information(df):
         # For Windows users:
         # print(f"\nTesting reachability for {ip_address}...\n")
         # ping_reply = os.system(f"ping -n 1 -w 1 {ip_address}")
-
         # First we test reachability
 
         try:
