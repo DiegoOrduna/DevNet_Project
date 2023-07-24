@@ -26,45 +26,53 @@ def messages_webhook():
         pprint.pprint(json_data)
         room_id = json_data["data"]["roomId"]
         # check if json data has a file attached
-        if (
-            "files" in json_data["data"]
-            and json_data["data"]["personEmail"] != "HelpMate@webex.bot"
-        ):
-            # We get the csv file from the message
-            file = teams_api.messages.get(json_data["data"]["id"]).files[0]
+        try:
+            if (
+                "files" in json_data["data"]
+                and json_data["data"]["personEmail"] != "HelpMate@webex.bot"
+            ):
+                # We get the csv file from the message
+                file = teams_api.messages.get(json_data["data"]["id"]).files[0]
 
-            # get the file from the message using the file url and as auth header we use the access token as bearer token
-            file_request = requests.get(
-                file, headers={"Authorization": "Bearer " + WEBEX_TEAMS_ACCESS_TOKEN}
-            )
-
-            # get the file contents
-            file_data = file_request.content.decode("utf-8")
-            df = pd.read_csv(io.StringIO(file_data), sep=",")
-
-            # process the file
-            send_message(teams_api, room_id, "Analysing CSV file, please wait...")
-            df = process(df)
-
-            # send the processed file to the room
-            teams_api.messages.create(
-                roomId=room_id,
-                text="Here is the processed CSV file",
-                files=["interns_challenge_final.csv"],
-            )
-
-            return "OK"
-        else:
-            if json_data["data"]["personEmail"] != "HelpMate@webex.bot":
-                # send a message to the room with the file url
-                send_message(
-                    teams_api,
-                    room_id,
-                    "Please send a CSV file",
+                # get the file from the message using the file url and as auth header we use the access token as bearer token
+                file_request = requests.get(
+                    file,
+                    headers={"Authorization": "Bearer " + WEBEX_TEAMS_ACCESS_TOKEN},
                 )
+
+                # get the file contents
+                file_data = file_request.content.decode("utf-8")
+                df = pd.read_csv(io.StringIO(file_data), sep=",")
+
+                # process the file
+                send_message(teams_api, room_id, "Analyzing CSV file, please wait...")
+                df = process(df, teams_api, room_id)
+
+                # send the processed file to the room
+                teams_api.messages.create(
+                    roomId=room_id,
+                    text="Here is the processed CSV file",
+                    files=["interns_challenge_final.csv"],
+                )
+
+                return "OK"
+            else:
+                if json_data["data"]["personEmail"] != "HelpMate@webex.bot":
+                    # send a message to the room with the file url
+                    send_message(
+                        teams_api,
+                        room_id,
+                        "Please send a CSV file",
+                    )
+                return "OK"
+        except:
+            send_message(
+                teams_api,
+                room_id,
+                "Please send a CSV file",
+            )
             return "OK"
-    else:
-        return "OK"
+    return "OK"
 
 
 if __name__ == "__main__":

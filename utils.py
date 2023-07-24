@@ -1,15 +1,18 @@
-from access import access_devices
-import requests
-import re
-from netmiko import ConnectHandler
 import pandas as pd
+import re
 import urllib3
-from requests.auth import HTTPBasicAuth
 import json
+from access import access_devices
+from netmiko import ConnectHandler
+import requests
+from requests.auth import HTTPBasicAuth
+
 
 urllib3.disable_warnings()
 
 url = "https://id.cisco.com/oauth2/default/v1/token"
+
+CLEANR = re.compile("<.*?>|&([a-z0-9]+|#[0-9]{1,6}|#x[0-9a-f]{1,6});")
 
 
 def create_webhook(teams_api, name, webhook, resource):
@@ -118,7 +121,7 @@ def get_device_information(df):
 
 
 # function to get bugs from cisco api
-def get_bugs(df):
+def get_bugs(df, teams_api, room_id):
     df["Potential_bugs"] = None
     df["Severity"] = None
     token = access_devices()
@@ -158,10 +161,12 @@ def get_bugs(df):
                         head = headline[index]
                         device = device_id
                         if sev == "1":
-                            print(
-                                f"Detected potential catastrophic bug in {device}: {bug}"
+                            send_message(
+                                teams_api=teams_api,
+                                room_id=room_id,
+                                message=f"🪲 Detected potential bug in {device}: {bug}\nDescription: {re.sub(CLEANR, '', head)}",
                             )
-                            print(f"With the description: {head}")
+
                 else:
                     print(f"Request failed with status code {response.status_code}")
                     df.at[index, "Potential_bugs"] = "Wrong API access"
@@ -179,7 +184,7 @@ def get_bugs(df):
 
 
 # function to get vulnerabilities from cisco api
-def get_vulnerabilities(df):
+def get_vulnerabilities(df, teams_api, room_id):
     df["PSIRT"] = None
     token = access_devices()
     headers = {
@@ -219,8 +224,10 @@ def get_vulnerabilities(df):
                     for index in range(len(advisory_id2)):
                         ad_id2 = advisory_id2[index]
                         Summ = Summary[index]
-                        print(
-                            f"PSIRT critical for {version}: {ad_id2}, se muestra resumen a continuacion: {Summ}"
+                        send_message(
+                            teams_api=teams_api,
+                            room_id=room_id,
+                            message=f"⚠️ PSIRT critical for {version}: {ad_id2}, Summary:\n {re.sub(CLEANR, '', Summ)}",
                         )
                     df.at[index, "PSIRT"] = advisory_id
                 else:
@@ -231,7 +238,7 @@ def get_vulnerabilities(df):
     return df
 
 
-def get_memory(df):
+def get_memory(df, teams_api, room_id):
     df["Total_proc_mem"] = ""
     df["Used_proc_mem"] = ""
     df["Free_proc_mem"] = ""
@@ -299,8 +306,10 @@ def get_memory(df):
                         df.at[index, "Free_proc_mem"] = free_memory
                         # df.at[index, 'Percentage_free_mem'] = left_percentage_memory
                         if used_percentage_memory >= 90:
-                            print(
-                                f"El dispositivo excede el 90% de uso de memoria, lo que podria provocar lentitud en el sistema"
+                            send_message(
+                                teams_api=teams_api,
+                                room_id=room_id,
+                                message=f"🐌 Device exceeds 90% memory usage, which could cause system slowdown",
                             )
                 # print (memory_statistics)
             else:
