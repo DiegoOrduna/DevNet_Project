@@ -1,4 +1,4 @@
-from access import access
+from access import access_devices
 import requests
 import re
 from netmiko import ConnectHandler
@@ -10,6 +10,38 @@ import json
 urllib3.disable_warnings()
 
 url = "https://id.cisco.com/oauth2/default/v1/token"
+
+
+def create_webhook(teams_api, name, webhook, resource):
+    delete_webhook(teams_api, name)
+    teams_api.webhooks.create(
+        name=name,
+        targetUrl=get_ngrok_url() + webhook,
+        resource=resource,
+        event="created",
+        filter=None,
+    )
+
+
+def delete_webhook(teams_api, name):
+    for hook in teams_api.webhooks.list():
+        if hook.name == name:
+            teams_api.webhooks.delete(hook.id)
+
+
+def get_ngrok_url(addr="127.0.0.1", port=4040):
+    try:
+        ngrokpage = requests.get(
+            "http://{}:{}/api/tunnels".format(addr, port), headers=""
+        ).text
+    except:
+        raise RuntimeError("Not able to connect to ngrok API")
+    ngrok_info = json.loads(ngrokpage)
+    return ngrok_info["tunnels"][0]["public_url"]
+
+
+def send_message(teams_api, room_id, message):
+    teams_api.messages.create(roomId=room_id, text=message)
 
 
 def clean(data):
@@ -89,7 +121,7 @@ def get_device_information(df):
 def get_bugs(df):
     df["Potential_bugs"] = None
     df["Severity"] = None
-    token = access()
+    token = access_devices()
     headers = {
         "Authorization": f"Bearer {token}",
     }
@@ -149,7 +181,7 @@ def get_bugs(df):
 # function to get vulnerabilities from cisco api
 def get_vulnerabilities(df):
     df["PSIRT"] = None
-    token = access()
+    token = access_devices()
     headers = {
         "Authorization": f"Bearer {token}",
     }

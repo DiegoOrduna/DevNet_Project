@@ -8,9 +8,8 @@ from utils import (
     get_memory,
 )
 
-if __name__ == "__main__":
-    print("Reading data from csv file...")
-    df = pd.read_csv("interns_challenge.csv")
+
+def process(df):
     print("Cleaning data...")
     df = clean(df)
     print("Getting device information...")
@@ -25,3 +24,7 @@ if __name__ == "__main__":
     print("Saving data to csv file...")
     df.to_csv("interns_challenge_final.csv", index=False)
     print("Done!")
+    return df
+
+
+process(pd.read_csv("interns_challenge_new.csv"))
