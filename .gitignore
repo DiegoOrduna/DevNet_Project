@@ -6,3 +6,5 @@
 /__pycache__
 #ignoring node modules
 /node_modules/
+#ignoring shutdown
+/shutdown.py
